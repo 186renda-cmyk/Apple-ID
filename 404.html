@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Not Found | Global Apple ID Shop</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#f5f7ff', 500:'#3b82f6', 600:'#2563eb', 900:'#0f172a' }
+                    },
+                    fontFamily: {
+                        sans: ['SF Pro Display', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 flex items-center justify-center min-h-screen font-sans">
+
+    <div class="text-center px-4">
+        <div class="inline-flex items-center justify-center w-24 h-24 bg-slate-100 rounded-full mb-8 relative">
+            <i class="fa-solid fa-compass text-5xl text-slate-300"></i>
+            <div class="absolute -bottom-2 -right-2 bg-red-50 text-red-500 text-xl font-bold px-2 py-1 rounded-lg border border-red-100">404</div>
+        </div>
+        
+        <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-4">Page Not Found</h1>
+        <p class="text-lg text-slate-500 mb-8 max-w-md mx-auto">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/" class="inline-flex items-center justify-center px-8 py-3 text-base font-bold rounded-full text-white bg-slate-900 hover:bg-brand-600 transition-all shadow-lg shadow-slate-200">
+                <i class="fa-solid fa-house mr-2"></i> Back to Home
+            </a>
+            <a href="/#faq" class="inline-flex items-center justify-center px-8 py-3 text-base font-bold rounded-full text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-all">
+                <i class="fa-regular fa-circle-question mr-2"></i> Visit FAQ
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
