@@ -1,3 +1,1 @@
-# Cloudflare Pages Redirect Rules 
-# 把 /api/shop 跳转到你的联盟链接，状态码 302 (临时) 或 301 (永久) 
-/api/shop  https://accboyytbxmdh.acceboy.com/zh-cn-cny/buy-apple-id   301
+/api/shop  https://accboyytbxmdh.acceboy.com/zh-cn-cny/buy-apple-id  301

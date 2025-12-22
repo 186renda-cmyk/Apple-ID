@@ -1,5 +1,3 @@
 User-agent: *
 Allow: /
-
-# 指向站点地图
 Sitemap: https://global-apple-id.top/sitemap.xml
