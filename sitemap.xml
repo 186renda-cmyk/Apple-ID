@@ -2,29 +2,78 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://global-apple-id.top/</loc>
-        <lastmod>2025-05-20</lastmod>
+        <lastmod>2026-01-15</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     
     <url>
+        <loc>https://global-apple-id.top/blog/index.html</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://global-apple-id.top/blog/how-to-create-apple-id.html</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://global-apple-id.top/blog/how-to-change-apple-id-region.html</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
         <loc>https://global-apple-id.top/blog/how-to-redeem-gift-cards.html</loc>
-        <lastmod>2025-05-20</lastmod>
+        <lastmod>2026-01-15</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
         <loc>https://global-apple-id.top/blog/must-have-apps.html</loc>
-        <lastmod>2025-05-20</lastmod>
+        <lastmod>2026-01-15</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
         <loc>https://global-apple-id.top/blog/fix-account-disabled.html</loc>
-        <lastmod>2025-05-20</lastmod>
+        <lastmod>2026-01-15</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://global-apple-id.top/about.html</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+    <url>
+        <loc>https://global-apple-id.top/contact.html</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+    <url>
+        <loc>https://global-apple-id.top/privacy-policy.html</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+    <url>
+        <loc>https://global-apple-id.top/terms-of-service.html</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
     </url>
 </urlset>
