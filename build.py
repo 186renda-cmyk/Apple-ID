@@ -52,8 +52,8 @@ class SiteBuilder:
         if not url:
             return url
             
-        # 1. Ignore Special Protocols & Anchors
-        if url.startswith(('http', 'https', 'mailto:', 'tel:', '#', 'javascript:', 'data:')):
+        # 1. Ignore Special Protocols & Anchors (except pure anchors on non-index pages which need fixing later)
+        if url.startswith(('http', 'https', 'mailto:', 'tel:', 'javascript:', 'data:')):
             return url
             
         # 2. Resolve Relative to Absolute
@@ -208,8 +208,12 @@ class SiteBuilder:
         
         # --- A. Link Cleaning & Security ---
         for a in soup.find_all('a', href=True):
-            # Clean Link
-            a['href'] = self.clean_link(a['href'], file_path)
+            # Special handling for anchor links on non-index pages
+            if not is_index and a['href'].startswith('#'):
+                a['href'] = '/' + a['href']
+            else:
+                # Clean Link
+                a['href'] = self.clean_link(a['href'], file_path)
             
             # External Link Security (noopener)
             href = a['href']
