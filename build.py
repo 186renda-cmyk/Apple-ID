@@ -592,7 +592,7 @@ class SiteBuilder:
         
         for entry in self.sitemap_urls:
             # Skip 404 pages or google verification files if they exist
-            if '404' in entry['loc'] or 'google' in entry['loc']:
+            if '404' in entry['loc'] or 'google' in entry['loc'] or 'MasterTool' in entry['loc'] or 'SEO_Dashboard' in entry['loc']:
                 continue
                 
             xml_content.append('  <url>')
