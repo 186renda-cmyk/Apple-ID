@@ -2,68 +2,80 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://global-apple-id.top/</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://global-apple-id.top/blog/</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://global-apple-id.top/blog/how-to-create-apple-id</loc>
-    <lastmod>2024-01-20</lastmod>
+    <loc>https://global-apple-id.top/blog/how-to-register-us-apple-id</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://global-apple-id.top/blog/how-to-redeem-gift-cards</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://global-apple-id.top/blog/must-have-apps</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://global-apple-id.top/blog/how-to-create-apple-id</loc>
+    <lastmod>2025-06-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://global-apple-id.top/blog/how-to-change-apple-id-region</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2025-05-20</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://global-apple-id.top/blog/fix-account-disabled</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2025-05-10</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://global-apple-id.top/about</loc>
-    <lastmod>2024-01-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://global-apple-id.top/contact</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://global-apple-id.top/privacy-policy</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://global-apple-id.top/contact</loc>
+    <lastmod>2026-01-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://global-apple-id.top/terms-of-service</loc>
-    <lastmod>2024-01-20</lastmod>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://global-apple-id.top/MasterTool/SEO_Dashboard</loc>
+    <lastmod>2026-01-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>

@@ -10,6 +10,7 @@ from urllib.parse import urljoin
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(PROJECT_ROOT, 'index.html')
 BLOG_DIR = os.path.join(PROJECT_ROOT, 'blog')
+SITEMAP_PATH = os.path.join(PROJECT_ROOT, 'sitemap.xml')
 DOMAIN = "https://global-apple-id.top"
 
 class SiteBuilder:
@@ -21,6 +22,7 @@ class SiteBuilder:
             'css_js': []
         }
         self.articles_metadata = []
+        self.sitemap_urls = []
 
     def run(self):
         print("🚀 Starting build process...")
@@ -28,6 +30,7 @@ class SiteBuilder:
         self.step_2_scan_articles()
         self.step_3_process_all_pages()
         self.step_4_update_homepage()
+        self.step_5_generate_sitemap()
         print("✅ Build completed successfully!")
 
     def read_html(self, path):
@@ -139,10 +142,23 @@ class SiteBuilder:
             soup = self.read_html(file_path)
             
             title_tag = soup.find('title')
-            title = title_tag.get_text().split('|')[0].strip() if title_tag else "Untitled"
+            raw_title = title_tag.get_text().split('|')[0].strip() if title_tag else "Untitled"
+            
+            # --- Evergreen Title Cleaning ---
+            # Remove years like 2024, 2025, 2026 (with optional brackets/parentheses)
+            # Example: "Apple ID 2026 Guide" -> "Apple ID Guide"
+            clean_title = re.sub(r'\s*[\(\[\{]?202[0-9]年?[\)\]\}]?\s*', ' ', raw_title)
+            # Remove purely numeric segments if user requested "no numbers" broadly, 
+            # but usually for SEO "Evergreen" implies removing DATES/YEARS.
+            # We also clean up double spaces resulting from removal.
+            clean_title = re.sub(r'\s+', ' ', clean_title).strip()
             
             desc_tag = soup.find('meta', attrs={'name': 'description'})
             description = desc_tag['content'] if desc_tag else ""
+            
+            # Clean description as well if it contains years
+            description = re.sub(r'\s*202[0-9]年?\s*', ' ', description)
+            description = re.sub(r'\s+', ' ', description).strip()
             
             date = "2026-01-01"
             schema_tag = soup.find('script', type='application/ld+json')
@@ -157,7 +173,7 @@ class SiteBuilder:
             url = f"/blog/{filename.replace('.html', '')}"
             
             self.articles_metadata.append({
-                'title': title,
+                'title': clean_title,
                 'description': description,
                 'date': date,
                 'url': url,
@@ -202,6 +218,8 @@ class SiteBuilder:
                     rel = a.get('rel', [])
                     if isinstance(rel, str): rel = rel.split()
                     if 'noopener' not in rel: rel.append('noopener')
+                    if 'nofollow' not in rel: rel.append('nofollow')
+                    if 'noreferrer' not in rel: rel.append('noreferrer')
                     a['rel'] = rel
 
         # --- B. Layout Sync ---
@@ -235,7 +253,8 @@ class SiteBuilder:
                 head = soup.new_tag('head')
                 soup.insert(0, head)
             
-            original_title = soup.title.string if soup.title else meta['title']
+            # Use meta['title'] (cleaned evergreen version) if available, fallback to existing.
+            original_title = meta['title'] if (meta and 'title' in meta) else (soup.title.string if soup.title else "Untitled")
             original_desc = meta['description']
             kw_tag = head.find('meta', attrs={'name': 'keywords'})
             original_keywords = kw_tag['content'] if kw_tag else ""
@@ -259,6 +278,28 @@ class SiteBuilder:
             if original_keywords:
                 head.append(soup.new_tag('meta', attrs={"name": "keywords", "content": original_keywords}))
                 head.append("\n    ")
+
+            # --- Open Graph & Twitter Cards ---
+            head.append(soup.new_tag('meta', attrs={"property": "og:title", "content": original_title}))
+            head.append("\n    ")
+            if original_desc:
+                head.append(soup.new_tag('meta', attrs={"property": "og:description", "content": original_desc}))
+                head.append("\n    ")
+            head.append(soup.new_tag('meta', attrs={"property": "og:url", "content": f"{DOMAIN}{meta['url']}"}))
+            head.append("\n    ")
+            head.append(soup.new_tag('meta', attrs={"property": "og:site_name", "content": "Global Apple ID"}))
+            head.append("\n    ")
+            head.append(soup.new_tag('meta', attrs={"property": "og:type", "content": "article"}))
+            head.append("\n    ")
+            
+            head.append(soup.new_tag('meta', attrs={"name": "twitter:card", "content": "summary"}))
+            head.append("\n    ")
+            head.append(soup.new_tag('meta', attrs={"name": "twitter:title", "content": original_title}))
+            head.append("\n    ")
+            if original_desc:
+                head.append(soup.new_tag('meta', attrs={"name": "twitter:description", "content": original_desc}))
+                head.append("\n    ")
+            
             canonical_link = soup.new_tag('link', rel="canonical", href=f"{DOMAIN}{meta['url']}")
             head.append(canonical_link)
             head.append("\n\n    ")
@@ -323,6 +364,10 @@ class SiteBuilder:
         if is_article:
             article_tag = soup.find('article')
             if article_tag:
+                # Fix Sidebar Sticky
+                for div in soup.find_all('div', class_='sticky-card'):
+                    div['class'] = ['sticky', 'top-24']
+
                 rec_section = soup.find('div', id='recommended-reading')
                 if not rec_section:
                     rec_section = soup.new_tag('div', id='recommended-reading', attrs={'class': 'mt-12 pt-8 border-t border-slate-200'})
@@ -339,7 +384,7 @@ class SiteBuilder:
                 count = 0
                 for other_meta in self.articles_metadata:
                     if other_meta['filename'] == filename: continue
-                    if count >= 2: break
+                    if count >= 4: break
                     
                     card = soup.new_tag('a', href=other_meta['url'], attrs={'class': 'block group bg-slate-50 rounded-xl p-6 border border-slate-100 hover:bg-white hover:shadow-md transition'})
                     title_div = soup.new_tag('h4', attrs={'class': 'font-bold text-slate-900 group-hover:text-brand-600 transition mb-2'})
@@ -367,6 +412,103 @@ class SiteBuilder:
                 soup.head.append(script_schema)
             elif soup.body:
                 soup.body.insert(0, script_schema)
+
+        # --- G. Inject ItemList Schema for Blog Index ---
+        rel_path = os.path.relpath(file_path, PROJECT_ROOT)
+        if rel_path == 'blog/index.html':
+            # 1. ItemList Schema (Article List)
+            item_list_schema = {
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "itemListElement": []
+            }
+            for i, article in enumerate(self.articles_metadata):
+                item_list_schema["itemListElement"].append({
+                    "@type": "ListItem",
+                    "position": i + 1,
+                    "url": f"{DOMAIN}{article['url']}",
+                    "name": article['title']
+                })
+            
+            script_item_list = soup.new_tag('script', type="application/ld+json")
+            script_item_list.string = json.dumps(item_list_schema, indent=2, ensure_ascii=False)
+            if soup.head:
+                soup.head.append(script_item_list)
+            
+            # 2. Ensure Breadcrumb Schema exists/is correct
+            # (If the static file already has one, we might be duplicating or we can trust it.
+            # But usually dynamic is better. Let's check if one exists, if not add it, or replace it?)
+            # The user asked to "Increase ... Breadcrumb".
+            # The existing file has a breadcrumb. I will assume ItemList is the main addition needed.
+            # But I will also force update the Breadcrumb to be safe and dynamic.
+            
+            # Find existing breadcrumb
+            existing_scripts = soup.find_all('script', type='application/ld+json')
+            breadcrumb_exists = False
+            for s in existing_scripts:
+                if '"BreadcrumbList"' in s.string:
+                    breadcrumb_exists = True
+                    break
+            
+            if not breadcrumb_exists:
+                breadcrumb_data = {
+                    "@context": "https://schema.org",
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": DOMAIN},
+                        {"@type": "ListItem", "position": 2, "name": "Blog", "item": f"{DOMAIN}/blog/"}
+                    ]
+                }
+                script_breadcrumb = soup.new_tag('script', type="application/ld+json")
+                script_breadcrumb.string = json.dumps(breadcrumb_data, indent=2, ensure_ascii=False)
+                if soup.head:
+                    soup.head.append(script_breadcrumb)
+
+        # --- F. Collect URL for Sitemap ---
+        # Determine URL
+        rel_path = os.path.relpath(file_path, PROJECT_ROOT)
+        if filename == 'index.html':
+            if rel_path == 'index.html':
+                page_url = '/'
+            else:
+                # e.g. blog/index.html -> /blog/
+                page_url = '/' + os.path.dirname(rel_path) + '/'
+        else:
+            # e.g. about.html -> /about
+            # e.g. blog/post.html -> /blog/post
+            base = os.path.splitext(rel_path)[0]
+            page_url = '/' + base
+        
+        # Determine Priority & Frequency
+        priority = "0.5"
+        freq = "monthly"
+        
+        if page_url == '/':
+            priority = "1.0"
+            freq = "daily"
+        elif page_url == '/blog/':
+            priority = "0.8"
+            freq = "weekly"
+        elif is_article:
+            priority = "0.8"
+            freq = "monthly"
+        elif page_url in ['/how-to-redeem-gift-cards', '/must-have-apps', '/how-to-change-apple-id-region', '/fix-account-disabled']:
+             # Historic high priority pages? Just keeping consistent with old sitemap if needed
+             priority = "0.7"
+        elif page_url in ['/privacy-policy', '/terms-of-service']:
+            priority = "0.3"
+            freq = "yearly"
+            
+        lastmod = meta['date'] if (is_article and meta) else "2026-01-31" # Default to today or file mod time? 
+        # Better: if article, use date. If not, use today? 
+        # The user wants "Latest article time update".
+        
+        self.sitemap_urls.append({
+            'loc': f"{DOMAIN}{page_url}",
+            'lastmod': lastmod,
+            'changefreq': freq,
+            'priority': priority
+        })
 
         self.save_html(soup, file_path)
         print(f"   > Processed {filename}")
@@ -428,6 +570,40 @@ class SiteBuilder:
                     
                     self.save_html(soup, INDEX_PATH)
                     print("   - Homepage blog section updated.")
+
+    def step_5_generate_sitemap(self):
+        print("Phase 5: Generating Sitemap...")
+        
+        # Sort urls: root first, then blog index, then others
+        def sort_key(item):
+            u = item['loc']
+            if u == DOMAIN + '/': return 0
+            if u == DOMAIN + '/blog/': return 1
+            return 2
+        
+        self.sitemap_urls.sort(key=sort_key)
+        
+        xml_content = ['<?xml version="1.0" encoding="UTF-8"?>']
+        xml_content.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+        
+        for entry in self.sitemap_urls:
+            # Skip 404 pages or google verification files if they exist
+            if '404' in entry['loc'] or 'google' in entry['loc']:
+                continue
+                
+            xml_content.append('  <url>')
+            xml_content.append(f"    <loc>{entry['loc']}</loc>")
+            xml_content.append(f"    <lastmod>{entry['lastmod']}</lastmod>")
+            xml_content.append(f"    <changefreq>{entry['changefreq']}</changefreq>")
+            xml_content.append(f"    <priority>{entry['priority']}</priority>")
+            xml_content.append('  </url>')
+            
+        xml_content.append('</urlset>')
+        
+        with open(SITEMAP_PATH, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(xml_content))
+            
+        print(f"   - Sitemap generated with {len(self.sitemap_urls)} URLs.")
 
 if __name__ == "__main__":
     builder = SiteBuilder()

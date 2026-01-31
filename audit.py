@@ -25,9 +25,10 @@ class SiteAudit:
         self.page_stats = {}  # file -> {'h1': int, 'schema': bool, 'breadcrumb': bool}
         
         # Configuration
-        self.ignore_paths = ['.git', 'node_modules', '__pycache__']
+        self.ignore_paths = ['.git', 'node_modules', '__pycache__', 'MasterTool']
         self.ignore_url_prefixes = ['/go/', '/cdn-cgi/', 'javascript:', 'mailto:', '#', 'tel:']
         self.ignore_files_pattern = re.compile(r'google.*\.html|404\.html')
+        self.ignore_dead_link_domains = ['apple.com', 'appleid.apple.com', 'account.apple.com', 'iforgot.apple.com', 'apps.apple.com']
         
         # Scoring Penalties
         self.penalties = {
@@ -249,6 +250,11 @@ class SiteAudit:
         self.log('INFO', f"Checking {len(self.external_links)} external links...")
         
         def check_link(url):
+            # Check whitelist
+            domain = urlparse(url).netloc
+            if any(d in domain for d in self.ignore_dead_link_domains):
+                return None
+
             try:
                 headers = {'User-Agent': 'Mozilla/5.0 (compatible; SEOAuditBot/1.0)'}
                 response = requests.head(url, headers=headers, timeout=5, allow_redirects=True)
