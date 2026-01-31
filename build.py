@@ -417,7 +417,7 @@ class SiteBuilder:
             elif soup.body:
                 soup.body.insert(0, script_schema)
 
-        # --- G. Inject ItemList Schema for Blog Index ---
+                # --- G. Inject ItemList Schema for Blog Index ---
         rel_path = os.path.relpath(file_path, PROJECT_ROOT)
         if rel_path == 'blog/index.html':
             # 1. ItemList Schema (Article List)
@@ -426,6 +426,7 @@ class SiteBuilder:
                 "@type": "ItemList",
                 "itemListElement": []
             }
+            # Use sorted articles_metadata directly
             for i, article in enumerate(self.articles_metadata):
                 item_list_schema["itemListElement"].append({
                     "@type": "ListItem",
@@ -433,6 +434,17 @@ class SiteBuilder:
                     "url": f"{DOMAIN}{article['url']}",
                     "name": article['title']
                 })
+            
+            # Remove any duplicate/old schemas first if possible? 
+            # Actually, `read_html` reads the file as is. If we append, we might duplicate.
+            # But since we overwrite the file at the end, and we just read it from disk...
+            # Wait, step_3 runs on *all* pages.
+            # If `blog/index.html` is a static file that we are modifying, we should be careful not to append endlessly.
+            # However, `read_html` reads the source file. If the source file already has the script, we append another one.
+            # Let's clear existing ItemList schemas to be safe.
+            for s in soup.find_all('script', type='application/ld+json'):
+                if '"ItemList"' in s.string:
+                    s.decompose()
             
             script_item_list = soup.new_tag('script', type="application/ld+json")
             script_item_list.string = json.dumps(item_list_schema, indent=2, ensure_ascii=False)
