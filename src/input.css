@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@source "../**/*.{html,js,py}";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
+  --color-brand-900: #0c4a6e;
+  
+  /* Add missing brand colors if used, guessing intermediate values or just mapping what was there */
+  /* The original config only had 50, 100, 500, 600, 900. 
+     Tailwind generates utilities like bg-brand-50 based on these variables. */
+}

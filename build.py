@@ -116,17 +116,47 @@ class SiteBuilder:
                         self.assets['favicons'].append(link)
                         seen_icons.add(key)
 
-            # 4. Extract CSS/JS
+            # 4. Extract CSS/JS (and Preconnect)
+            # Use a set to track seen assets to prevent duplicates
+            seen_assets = set()
+            
+            def add_asset(asset):
+                # Generate a unique key for the asset
+                if asset.name == 'script':
+                    src = asset.get('src')
+                    if src:
+                        key = ('script', src)
+                    else:
+                        key = ('script-inline', str(asset.string).strip())
+                elif asset.name == 'link':
+                    href = asset.get('href')
+                    rel = asset.get('rel')
+                    if isinstance(rel, list): rel = " ".join(rel)
+                    key = ('link', href, rel)
+                elif asset.name == 'style':
+                    key = ('style', str(asset.string).strip())
+                else:
+                    key = str(asset)
+                
+                if key not in seen_assets:
+                    self.assets['css_js'].append(asset)
+                    seen_assets.add(key)
+
             for script in head.find_all('script'):
                 if script.get('type') == 'application/ld+json':
                     continue
-                self.assets['css_js'].append(script)
+                add_asset(script)
             
+            # Extract stylesheets
             for link in head.find_all('link', rel='stylesheet'):
-                self.assets['css_js'].append(link)
+                add_asset(link)
+            
+            # Extract preconnect
+            for link in head.find_all('link', rel='preconnect'):
+                add_asset(link)
                 
             for style in head.find_all('style'):
-                self.assets['css_js'].append(style)
+                add_asset(style)
 
         print(f"   - Extracted Nav, Footer, {len(self.assets['favicons'])} Favicons, {len(self.assets['css_js'])} Resources.")
 
