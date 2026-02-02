@@ -229,7 +229,17 @@ class SiteBuilder:
         header = soup.find('header')
         if not header: return
         
-        nav_container = soup.new_tag('div', attrs={'class': 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8'})
+        # Clean up existing category navs to prevent duplication
+        # 1. Remove by ID
+        old_by_id = soup.find('div', id='category-nav')
+        if old_by_id: old_by_id.decompose()
+        
+        # 2. Remove by Class (legacy cleanup)
+        old_by_class = soup.find_all('div', attrs={'class': 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8'})
+        for old in old_by_class:
+            old.decompose()
+        
+        nav_container = soup.new_tag('div', id='category-nav', attrs={'class': 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8'})
         flex = soup.new_tag('div', attrs={'class': 'flex flex-wrap justify-center gap-3'})
         
         # 'All' button
@@ -248,10 +258,20 @@ class SiteBuilder:
         header.insert_after(nav_container)
 
     def inject_pagination(self, soup, current, total, base_url):
+        main = soup.find('main')
+        if not main: return
+
+        # Clean up existing pagination to prevent duplication
+        old_by_id = soup.find('nav', id='pagination-nav')
+        if old_by_id: old_by_id.decompose()
+        
+        old_by_class = soup.find_all('nav', attrs={'class': 'mt-16 flex justify-center gap-2'})
+        for old in old_by_class:
+            old.decompose()
+
         if total <= 1: return
         
-        main = soup.find('main')
-        nav = soup.new_tag('nav', attrs={'class': 'mt-16 flex justify-center gap-2'})
+        nav = soup.new_tag('nav', id='pagination-nav', attrs={'class': 'mt-16 flex justify-center gap-2'})
         
         # Prev
         if current > 1:
