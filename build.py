@@ -4,6 +4,7 @@ import json
 import re
 import copy
 import math
+from datetime import datetime
 from bs4 import BeautifulSoup, Comment
 from urllib.parse import urljoin
 
@@ -363,10 +364,7 @@ class SiteBuilder:
         
         # Link Cleaning
         for a in soup.find_all('a', href=True):
-            if not is_index and a['href'].startswith('#'):
-                a['href'] = '/' + a['href']
-            else:
-                a['href'] = self.clean_link(a['href'], file_path)
+            a['href'] = self.clean_link(a['href'], file_path)
             
             # Security
             if a['href'].startswith(('http', 'https')) and not a['href'].startswith(DOMAIN):
@@ -432,6 +430,22 @@ class SiteBuilder:
             h1 = soup.find('h1')
             if h1: h1.string = meta['title']
 
+            # Sync Body Date with JSON-LD Date
+            # Try to find the date container: usually contains fa-calendar
+            calendar_icon = soup.find('i', class_='fa-calendar')
+            if calendar_icon:
+                date_container = calendar_icon.parent
+                if date_container:
+                    date_span = date_container.find('span')
+                    if date_span:
+                        try:
+                            # Convert YYYY-MM-DD to Month DD, YYYY (e.g., Feb 06, 2026)
+                            dt = datetime.strptime(meta['date'], '%Y-%m-%d')
+                            formatted_date = dt.strftime('%b %d, %Y')
+                            date_span.string = formatted_date
+                        except Exception as e:
+                            print(f"   ! Warning: Failed to format date for {meta['filename']}: {e}")
+
             # Recommendations
             article_tag = soup.find('article')
             if article_tag:
@@ -443,7 +457,7 @@ class SiteBuilder:
                 count = 0
                 for om in self.articles_metadata:
                     if om['filename'] == meta['filename']: continue
-                    if count >= 2: break
+                    if count >= 4: break
                     
                     card = soup.new_tag('a', href=om['url'], attrs={'class': 'block bg-slate-50 p-4 rounded-xl hover:bg-white border border-slate-100 hover:shadow-md transition'})
                     h4 = soup.new_tag('h4', attrs={'class': 'font-bold text-sm mb-1'})
@@ -482,16 +496,28 @@ class SiteBuilder:
     def step_4_update_homepage(self):
         print("Phase 4: Global Update (Homepage)...")
         soup = self.read_html(INDEX_PATH)
-        # (Simplified homepage update logic for brevity - keeping it functional)
-        # Find blog section
-        blog_sec = soup.find(string=re.compile("Latest Tutorials"))
-        if blog_sec and blog_sec.find_parent('section'):
-            grid = blog_sec.find_parent('section').find('div', class_=re.compile('grid-cols'))
-            if grid:
-                grid.clear()
-                for meta in self.articles_metadata[:3]:
-                    self.create_article_card(soup, grid, meta)
-                self.save_html(soup, INDEX_PATH)
+        # Find blog section by finding the "Latest Tutorials & News" heading
+        blog_heading = soup.find(string=re.compile("Latest Tutorials"))
+        
+        if blog_heading:
+            # Go up to the section or find the grid sibling
+            # Based on structure: <h2>Latest...</h2> -> parent -> parent -> find grid
+            # Or just find the nearest grid in this section
+            section = blog_heading.find_parent('section')
+            if section:
+                grid = section.find('div', class_=re.compile('grid-cols'))
+                if grid:
+                    grid.clear()
+                    for meta in self.articles_metadata[:3]:
+                        self.create_article_card(soup, grid, meta)
+                    self.save_html(soup, INDEX_PATH)
+                    print("   - Homepage blog section updated.")
+                else:
+                    print("   ! Warning: Could not find grid in homepage blog section.")
+            else:
+                print("   ! Warning: Could not find parent section for blog heading.")
+        else:
+            print("   ! Warning: Could not find 'Latest Tutorials' heading in homepage.")
 
     def step_5_generate_sitemap(self):
         print("Phase 5: Generating Sitemap...")
