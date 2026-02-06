@@ -176,55 +176,117 @@ class SiteBuilder:
             self.process_page(p, is_article=False)
 
     def generate_blog_system(self):
-        print("   - Generating Blog Pagination & Categories...")
+        print("   - Generating Blog System (Single Page JS Pagination)...")
         template_path = os.path.join(BLOG_DIR, 'index.html')
         if not os.path.exists(template_path): return
         
-        base_soup = self.read_html(template_path)
+        soup = self.read_html(template_path)
         
         # Clean up existing grid
-        grid_container = base_soup.find('div', class_=re.compile('grid-cols-1'))
+        grid_container = soup.find('div', class_=re.compile('grid-cols-1'))
         if grid_container: grid_container.clear()
         
         # Add Category Navigation
-        self.inject_category_nav(base_soup)
+        self.inject_category_nav(soup)
         
-        # Calculate Pages
-        total_articles = len(self.articles_metadata)
-        total_pages = math.ceil(total_articles / PAGE_SIZE)
+        # Populate Grid with ALL articles
+        grid = soup.find('div', class_=re.compile('grid-cols-1'))
+        for i, meta in enumerate(self.articles_metadata):
+            self.create_article_card(soup, grid, meta, index=i)
+            
+        # Inject JS Pagination
+        self.inject_js_pagination(soup)
         
-        for page in range(1, total_pages + 1):
-            soup = copy.copy(base_soup)
-            start_idx = (page - 1) * PAGE_SIZE
-            end_idx = start_idx + PAGE_SIZE
-            page_articles = self.articles_metadata[start_idx:end_idx]
-            
-            # Populate Grid
-            grid = soup.find('div', class_=re.compile('grid-cols-1'))
-            for meta in page_articles:
-                self.create_article_card(soup, grid, meta)
-            
-            # Add Pagination Controls
-            self.inject_pagination(soup, page, total_pages, '/blog/')
-            
-            # Save
-            if page == 1:
-                save_path = os.path.join(BLOG_DIR, 'index.html')
-                self.process_soup_assets(soup, save_path)
-                self.save_html(soup, save_path)
-            else:
-                save_path = os.path.join(BLOG_DIR, 'page', str(page), 'index.html')
-                self.process_soup_assets(soup, save_path)
-                self.save_html(soup, save_path)
+        # Save only index.html
+        save_path = os.path.join(BLOG_DIR, 'index.html')
+        self.process_soup_assets(soup, save_path)
+        self.save_html(soup, save_path)
+        
+        # Add to Sitemap (only index)
+        self.sitemap_urls.append({
+            'loc': f"{DOMAIN}/blog/",
+            'lastmod': "2026-02-02",
+            'changefreq': 'daily',
+            'priority': '0.8'
+        })
+
+    def inject_js_pagination(self, soup):
+        main = soup.find('main')
+        if not main: return
+
+        # Clean old pagination
+        old_nav = soup.find('nav', id='pagination-nav')
+        if old_nav: old_nav.decompose()
+        
+        # Insert JS Script
+        script_content = f"""
+        document.addEventListener('DOMContentLoaded', function() {{
+            const pageSize = {PAGE_SIZE};
+            const articles = document.querySelectorAll('.article-card');
+            const totalPages = Math.ceil(articles.length / pageSize);
+            let currentPage = 1;
+
+            function showPage(page) {{
+                currentPage = page;
+                articles.forEach((article, index) => {{
+                    if (index >= (page - 1) * pageSize && index < page * pageSize) {{
+                        article.style.display = 'flex';
+                    }} else {{
+                        article.style.display = 'none';
+                    }}
+                }});
+                updatePagination();
+                window.scrollTo({{ top: 0, behavior: 'smooth' }});
+            }}
+
+            function updatePagination() {{
+                const nav = document.getElementById('pagination-nav');
+                if (!nav) return;
+                nav.innerHTML = '';
+
+                // Prev
+                if (currentPage > 1) {{
+                    const prev = document.createElement('button');
+                    prev.className = 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-600 transition';
+                    prev.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+                    prev.onclick = () => showPage(currentPage - 1);
+                    nav.appendChild(prev);
+                }}
+
+                // Numbers
+                for (let i = 1; i <= totalPages; i++) {{
+                    const btn = document.createElement('button');
+                    btn.className = `w-10 h-10 flex items-center justify-center rounded-lg font-bold transition ${{i === currentPage ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-600'}}`;
+                    btn.innerText = i;
+                    btn.onclick = () => showPage(i);
+                    nav.appendChild(btn);
+                }}
+
+                // Next
+                if (currentPage < totalPages) {{
+                    const next = document.createElement('button');
+                    next.className = 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-600 transition';
+                    next.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+                    next.onclick = () => showPage(currentPage + 1);
+                    nav.appendChild(next);
+                }}
+            }}
+
+            // Init
+            if (articles.length > 0) {{
+                // Create Nav Container
+                const nav = document.createElement('nav');
+                nav.id = 'pagination-nav';
+                nav.className = 'mt-16 flex justify-center gap-2';
+                document.querySelector('main').appendChild(nav);
                 
-            # Add to Sitemap
-            page_url = '/blog/' if page == 1 else f'/blog/page/{page}/'
-            self.sitemap_urls.append({
-                'loc': f"{DOMAIN}{page_url}",
-                'lastmod': "2026-02-02",
-                'changefreq': 'daily',
-                'priority': '0.8'
-            })
+                showPage(1);
+            }}
+        }});
+        """
+        script = soup.new_tag('script')
+        script.string = script_content
+        soup.body.append(script)
 
     def inject_category_nav(self, soup):
         header = soup.find('header')
@@ -259,58 +321,14 @@ class SiteBuilder:
         header.insert_after(nav_container)
 
     def inject_pagination(self, soup, current, total, base_url):
-        main = soup.find('main')
-        if not main: return
+        # Deprecated: Handled by JS now, but kept for compatibility if needed
+        pass
 
-        # Clean up existing pagination to prevent duplication
-        old_by_id = soup.find('nav', id='pagination-nav')
-        if old_by_id: old_by_id.decompose()
-        
-        old_by_class = soup.find_all('nav', attrs={'class': 'mt-16 flex justify-center gap-2'})
-        for old in old_by_class:
-            old.decompose()
-
-        if total <= 1: return
-        
-        nav = soup.new_tag('nav', id='pagination-nav', attrs={'class': 'mt-16 flex justify-center gap-2'})
-        
-        # Prev
-        if current > 1:
-            prev_url = base_url if current == 2 else f"{base_url}page/{current-1}/"
-            a = soup.new_tag('a', href=prev_url, attrs={'class': 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-600 transition'})
-            a.append(soup.new_tag('i', attrs={'class': 'fa-solid fa-chevron-left'}))
-            nav.append(a)
-            
-        # Numbers
-        for p in range(1, total + 1):
-            is_active = (p == current)
-            classes = 'w-10 h-10 flex items-center justify-center rounded-lg font-bold transition '
-            classes += 'bg-slate-900 text-white shadow-lg' if is_active else 'bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-600'
-            
-            if is_active:
-                span = soup.new_tag('span', attrs={'class': classes})
-                span.string = str(p)
-                nav.append(span)
-            else:
-                url = base_url if p == 1 else f"{base_url}page/{p}/"
-                a = soup.new_tag('a', href=url, attrs={'class': classes})
-                a.string = str(p)
-                nav.append(a)
-                
-        # Next
-        if current < total:
-            next_url = f"{base_url}page/{current+1}/"
-            a = soup.new_tag('a', href=next_url, attrs={'class': 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-600 transition'})
-            a.append(soup.new_tag('i', attrs={'class': 'fa-solid fa-chevron-right'}))
-            nav.append(a)
-            
-        main.append(nav)
-
-    def create_article_card(self, soup, container, meta):
+    def create_article_card(self, soup, container, meta, index=None):
         # Determine styling based on category
         cat_data = self.categories.get(meta['category'], self.categories['tutorial'])
         
-        article_el = soup.new_tag('article', attrs={'class': 'bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition duration-300 flex flex-col h-full'})
+        article_el = soup.new_tag('article', attrs={'class': 'bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition duration-300 flex flex-col h-full article-card'})
         
         # Image Area
         bg_colors = {'tutorial': 'bg-blue-50', 'billing': 'bg-green-50', 'troubleshoot': 'bg-red-50', 'manage': 'bg-slate-100', 'apps': 'bg-purple-50'}
